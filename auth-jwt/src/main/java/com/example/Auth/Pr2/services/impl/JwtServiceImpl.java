@@ -1,66 +1,51 @@
 package com.example.Auth.Pr2.services.impl;
 
 import com.example.Auth.Pr2.commons.dtos.TokenResponse;
+import com.example.Auth.Pr2.commons.entities.UserModel;
 import com.example.Auth.Pr2.services.JwtService;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.beans.factory.annotation.Value;
+import io.jsonwebtoken.*;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
-
-import io.jsonwebtoken.security.Keys;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class JwtServiceImpl implements JwtService {
-    private final String secretKey;
 
-    public JwtServiceImpl(@Value("${jwt.secret}") String secretToken) {
-        this.secretKey = secretToken;
-    }
+    private static final String SECRET_KEY = "mysecret";
 
     @Override
-    public TokenResponse generateToken(Long userId) {
-        Date expirationDate = new Date(Long.MAX_VALUE);
+    public TokenResponse generateToken(UserModel user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", user.getRole().name()); // Agregar rol al token
 
         String token = Jwts.builder()
-                .setSubject(String.valueOf(userId))
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.HS512, secretKey) // Usamos signWith(secretKey, SignatureAlgorithm.HS512)
+                .setClaims(claims)
+                .setSubject(user.getId().toString())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();
 
-        return TokenResponse.builder()
-                .accessToken(token)
-                .build();
+        return new TokenResponse(token);
     }
 
     @Override
     public Claims getClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
+        return Jwts.parser()
+                .setSigningKey(SECRET_KEY)
                 .parseClaimsJws(token)
                 .getBody();
     }
 
     @Override
     public boolean isExpired(String token) {
-        try {
-            return getClaims(token).getExpiration().before(new Date());
-        } catch (Exception e) {
-            return false;
-        }
+        return getClaims(token).getExpiration().before(new Date());
     }
 
     @Override
     public Integer extractUserId(String token) {
-        try {
-            return Integer.parseInt(getClaims(token).getSubject());
-        } catch (Exception e) {
-            return null;
-        }
+        return Integer.parseInt(getClaims(token).getSubject());
     }
 }
-

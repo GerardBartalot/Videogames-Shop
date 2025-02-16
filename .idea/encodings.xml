@@ -6,6 +6,8 @@
     <file url="file://$PROJECT_DIR$/auth-jwt/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/eligibility-micro/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/game.service-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/kafka-events/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/kafka-micro/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/stripe-payments/src/main/java" charset="UTF-8" />
   </component>
 </project>

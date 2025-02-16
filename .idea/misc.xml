@@ -10,6 +10,8 @@
         <option value="$PROJECT_DIR$/eligibility-micro/pom.xml" />
         <option value="$PROJECT_DIR$/stripe-payments/pom.xml" />
         <option value="$PROJECT_DIR$/auth-jwt/pom.xml" />
+        <option value="$PROJECT_DIR$/kafka-micro/pom.xml" />
+        <option value="$PROJECT_DIR$/kafka-events/pom.xml" />
       </list>
     </option>
   </component>

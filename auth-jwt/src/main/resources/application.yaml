@@ -1,5 +1,6 @@
 jwt:
   secret: aP9fLd8JkT5rX2ZvQh4mCwByNs7GtYpWqR3EjKuVoMx6HcAbD1nLf8PtZy4XqR9mA5sR6dK7wM4NvZ2pgsja78SDjakskdjs9872SjsDjdjdj8
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/users
@@ -8,10 +9,23 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+
+  kafka:
+    bootstrap-servers: localhost:9092  # Configurar Kafka en localhost
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: auth-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
 logging:
   level:
     org:
       hibernate:
-        SQL: DEBUG
+        SQL: INFO
+
 server:
   port: 8081

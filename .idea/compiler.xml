@@ -9,8 +9,8 @@
         <module name="api-gateway" />
         <module name="game.service-api" />
         <module name="stripe-payments" />
-        <module name="eligibility-micro" />
         <module name="auth-jwt" />
+        <module name="kafka-events" />
       </profile>
     </annotationProcessing>
   </component>
@@ -18,8 +18,8 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="api-gateway" options="-parameters" />
       <module name="auth-jwt" options="-parameters" />
-      <module name="eligibility-micro" options="-parameters" />
       <module name="game.service-api" options="-parameters" />
+      <module name="kafka-events" options="-parameters" />
       <module name="stripe-payments" options="-parameters" />
     </option>
   </component>

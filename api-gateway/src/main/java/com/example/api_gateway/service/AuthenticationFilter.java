@@ -1,7 +1,8 @@
 package com.example.api_gateway.service;
 
+import io.jsonwebtoken.Claims;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
-import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -11,69 +12,60 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Component
-public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
-    private final RouterValidator validator;
+public class AuthenticationFilter implements GatewayFilter {
 
     private final JwtUtils jwtUtils;
+    private final RouterValidator routerValidator;
 
-    public AuthenticationFilter(RouterValidator validator, JwtUtils jwtUtils) {
-        super(Config.class);
-        this.validator = validator;
+    public AuthenticationFilter(JwtUtils jwtUtils, RouterValidator routerValidator) {
         this.jwtUtils = jwtUtils;
+        this.routerValidator = routerValidator;
     }
 
     @Override
-    public GatewayFilter apply(Config config) {
-        return ((exchange, chain) -> {
-            var request = exchange.getRequest();
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        ServerHttpRequest request = exchange.getRequest();
 
-            ServerHttpRequest serverHttpRequest = null;
-            if (validator.isSecured.test(request)) {
-                if (authMissing(request)) {
-                    return onError(exchange, HttpStatus.UNAUTHORIZED);
-                }
-
-                String authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
-
-                System.out.println(authHeader);
-
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    authHeader = authHeader.substring(7);
-                } else {
-                    return onError(exchange, HttpStatus.UNAUTHORIZED);
-                }
-
-                System.out.println((authHeader));
-
-                if (jwtUtils.isExpired(authHeader)) {
-                    return onError(exchange, HttpStatus.UNAUTHORIZED);
-                }
-
-                System.out.println(authHeader);
-
-                System.out.println(jwtUtils.extractUserId(authHeader).toString());
-
-                String userId = jwtUtils.extractUserId(authHeader).toString();
-
-                serverHttpRequest = exchange.getRequest()
-                        .mutate()
-                        .header("userIdRequest", userId)
-                        .build();
+        if (routerValidator.isSecured.test(request)) {
+            if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+                return onError(exchange, "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
             }
 
-            return chain.filter(exchange.mutate().request(serverHttpRequest).build());
-        });
+            String token = request.getHeaders().getOrEmpty(HttpHeaders.AUTHORIZATION).get(0).replace("Bearer ", "");
+
+            try {
+                jwtUtils.validateToken(token);
+            } catch (Exception e) {
+                return onError(exchange, "Invalid or Expired Token", HttpStatus.UNAUTHORIZED);
+            }
+
+            Claims claims = jwtUtils.extractAllClaims(token);
+            String role = claims.get("role", String.class);
+
+            // Protección de rutas según el rol del usuario
+            String path = request.getURI().getPath();
+
+            if (path.startsWith("/v1/auth/users") && !"ADMIN".equals(role)) {
+                return onError(exchange, "Access Denied", HttpStatus.FORBIDDEN);
+            }
+
+            if (path.startsWith("/v1/games") && !"ADMIN".equals(role)) {
+                return onError(exchange, "Access Denied", HttpStatus.FORBIDDEN);
+            }
+
+            if (path.startsWith("/v1/games/buy") && !"USER".equals(role)) {
+                return onError(exchange, "Access Denied", HttpStatus.FORBIDDEN);
+            }
+
+            return chain.filter(exchange);
+        }
+
+        return chain.filter(exchange);
     }
 
-    private Mono<Void> onError(ServerWebExchange exchange, HttpStatus httpStatus) {
+    private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus httpStatus) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(httpStatus);
         return response.setComplete();
     }
-
-    private boolean authMissing(ServerHttpRequest request) {
-        return !request.getHeaders().containsKey("Authorization");
-    }
-
-    public static class Config {}
 }

@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>eligibility-micro</artifactId>
+	<artifactId>kafka-events</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>eligibility-micro</name>
 	<description>Demo project for Spring Boot</description>
